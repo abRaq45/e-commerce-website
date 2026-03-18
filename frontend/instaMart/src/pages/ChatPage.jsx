@@ -1,19 +1,17 @@
 import { useState, useEffect, useRef } from "react";
+import API from "../api/axios"; // ✅ import this
 
 const ChatPage = ({ user }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const chatEndRef = useRef(null);
 
-  // ✅ Get userId safely
   const userId = user?.userId;
 
-  // ❗ Prevent crash if user not available
   if (!userId) {
     return <div style={{ padding: "20px" }}>Please login first</div>;
   }
 
-  // 🔹 Send message
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -21,22 +19,21 @@ const ChatPage = ({ user }) => {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/chat?userId=${userId}`,
+      // ✅ FIXED: using API (no localhost)
+      const response = await API.post(
+        `/chat?userId=${userId}`,
+        input,
         {
-          method: "POST",
           headers: {
             "Content-Type": "text/plain",
           },
-          body: input,
         }
       );
 
-      const data = await response.text();
-
-      const botMessage = { sender: "bot", text: data };
+      const botMessage = { sender: "bot", text: response.data };
 
       setMessages((prev) => [...prev, botMessage]);
+
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -47,49 +44,44 @@ const ChatPage = ({ user }) => {
     setInput("");
   };
 
-  // 🔹 Auto scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
- return (
-  <div className="chat-container">
+  return (
+    <div className="chat-container">
+      <div className="chat-wrapper">
 
-    <div className="chat-wrapper">
+        <div className="chat-header">
+          🛒 Smart Assistant
+        </div>
 
-      {/* Header */}
-      <div className="chat-header">
-        🛒 Smart Assistant
+        <div className="chat-box">
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={`message ${msg.sender === "user" ? "user" : "bot"}`}
+            >
+              {msg.text}
+            </div>
+          ))}
+          <div ref={chatEndRef}></div>
+        </div>
+
+        <div className="input-box">
+          <input
+            type="text"
+            placeholder="Ask something..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          />
+          <button onClick={sendMessage}>Send</button>
+        </div>
+
       </div>
-
-      {/* Messages */}
-      <div className="chat-box">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${msg.sender === "user" ? "user" : "bot"}`}
-          >
-            {msg.text}
-          </div>
-        ))}
-        <div ref={chatEndRef}></div>
-      </div>
-
-      {/* Input */}
-      <div className="input-box">
-        <input
-          type="text"
-          placeholder="Ask something..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <button onClick={sendMessage}>Send</button>
-      </div>
-
     </div>
-  </div>
-);
+  );
 };
 
 export default ChatPage;
