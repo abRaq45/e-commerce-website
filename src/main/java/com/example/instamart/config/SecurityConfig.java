@@ -44,7 +44,7 @@ public class SecurityConfig {
 
        configuration.setAllowedOrigins(List.of(
     "http://localhost:5173",
-    "https://e-commerce-website-i4agmcmsh-abdul-raquibs-projects.vercel.app"
+    "https://e-commerce-website-it4i73chz-abdul-raquibs-projects.vercel.app"
 ));
         configuration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
