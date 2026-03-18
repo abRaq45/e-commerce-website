@@ -38,7 +38,7 @@ function App() {
 
   return (
     <Router>
-      <Navbar
+      <NavBar
         user={user}
         setUser={setUser}
         filters={filters}
