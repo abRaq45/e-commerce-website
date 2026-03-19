@@ -83,10 +83,9 @@ public class ChatService {
         JSONObject body = new JSONObject();
 
         // ✅ FREE MODEL (WORKING)
-       body.put("model", "openchat/openchat-3.5-0106");
-
-        body.put("temperature", 0.2);
-        body.put("max_tokens", 200); // 🔥 IMPORTANT
+          body.put("model", "mistralai/mistral-7b-instruct:free");
+          body.put("temperature", 0.2);
+          body.put("max_tokens", 200);
 
         JSONArray messages = new JSONArray();
 
