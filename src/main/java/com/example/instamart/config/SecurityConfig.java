@@ -37,17 +37,21 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // 🌍 CORS Configuration
+    // 🌍 CORS Configuration (🔥 FIXED)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-       configuration.setAllowedOrigins(List.of(
-    "http://localhost:5173",
-    "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app/"
-));
+        // ✅ Allow all Vercel deployments + local
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "https://*.vercel.app"
+        ));
+
         configuration.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
@@ -63,39 +67,42 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> {})
+                .cors(cors -> {}) // enable cors
                 .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🔓 PUBLIC AUTH ENDPOINTS
+                        // ✅ FIX: Allow preflight requests
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 🔓 PUBLIC AUTH
                         .requestMatchers(
                                 "/api/users/signup",
                                 "/api/users/login"
                         ).permitAll()
 
-                        // 🔓 PUBLIC PRODUCT ENDPOINTS
+                        // 🔓 PUBLIC PRODUCTS
                         .requestMatchers(HttpMethod.GET, "/api/items").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
 
-                        // 🔥 FIX: ALLOW CHAT ENDPOINT
+                        // 🔓 PUBLIC CHAT
                         .requestMatchers("/api/chat/**").permitAll()
 
-                        // 🔒 PROTECTED CART
+                        // 🔒 CART
                         .requestMatchers("/api/cart/**").authenticated()
 
-                        // 🔒 PROTECTED WISHLIST
+                        // 🔒 WISHLIST
                         .requestMatchers("/api/users/*/wishlist/**").authenticated()
 
                         // 🔒 EVERYTHING ELSE
                         .anyRequest().authenticated()
                 )
+
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
-        // 🔐 Add JWT Filter
+        // 🔐 JWT Filter
         http.addFilterBefore(
                 jwtFilter,
                 UsernamePasswordAuthenticationFilter.class
