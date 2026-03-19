@@ -99,7 +99,8 @@ public class ChatService {
 
         HttpHeaders headers = new HttpHeaders();
 headers.set("Authorization", "Bearer " + apiKey);
-headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app/"); 
+headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app"); // ✅ no slash
+headers.set("X-Title", "InstaMart"); 
 headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> entity =
