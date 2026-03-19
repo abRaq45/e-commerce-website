@@ -24,7 +24,6 @@ public class ChatService {
     private final ItemRepository itemRepository;
     private final CartService cartService;
 
-    // 🔥 Pending cart storage (per user)
     private final Map<String, List<ItemEntry>> pendingCart = new HashMap<>();
 
     public ChatService(ItemRepository itemRepository, CartService cartService) {
@@ -35,7 +34,6 @@ public class ChatService {
     // 🔥 MAIN METHOD
     public String processMessage(String userId, String userMessage) {
 
-        // ✅ Handle YES/NO without AI
         if (userMessage.equalsIgnoreCase("yes") ||
                 userMessage.equalsIgnoreCase("no")) {
 
@@ -49,6 +47,7 @@ public class ChatService {
             return handleCartLogic(userId, json);
 
         } catch (Exception e) {
+            System.out.println("❌ ERROR IN CHAT SERVICE:");
             e.printStackTrace();
             return "Something went wrong. Please try again.";
         }
@@ -58,6 +57,10 @@ public class ChatService {
     private String callOpenRouter(String userMessage) {
 
         RestTemplate restTemplate = new RestTemplate();
+
+        // 🔥 DEBUG LOGS (IMPORTANT)
+        System.out.println("🔍 API KEY VALUE = " + apiKey);
+        System.out.println("🔍 BASE URL = " + baseUrl);
 
         String systemPrompt = """
         You are an AI assistant for an e-commerce application.
@@ -97,19 +100,31 @@ public class ChatService {
 
         body.put("messages", messages);
 
+        // 🔥 HEADERS
         HttpHeaders headers = new HttpHeaders();
-headers.set("Authorization", "Bearer " + apiKey);
-headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app"); // ✅ no slash
-headers.set("X-Title", "InstaMart"); 
-headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+        headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app");
+        headers.set("X-Title", "InstaMart");
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        System.out.println("🔍 AUTH HEADER = Bearer " + apiKey);
 
         HttpEntity<String> entity =
                 new HttpEntity<>(body.toString(), headers);
 
-        ResponseEntity<String> response =
-                restTemplate.postForEntity(baseUrl, entity, String.class);
+        try {
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(baseUrl, entity, String.class);
 
-        return response.getBody();
+            System.out.println("✅ OPENROUTER RESPONSE = " + response.getBody());
+
+            return response.getBody();
+
+        } catch (Exception e) {
+            System.out.println("❌ OPENROUTER CALL FAILED:");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // 🔹 STEP 2: EXTRACT JSON
@@ -131,7 +146,6 @@ headers.setContentType(MediaType.APPLICATION_JSON);
     // 🔹 STEP 3: HANDLE CART LOGIC
     private String handleCartLogic(String userId, String input) {
 
-        // 🟢 STEP A: HANDLE YES / NO
         if (pendingCart.containsKey(userId)) {
 
             String msg = input.toLowerCase();
@@ -158,7 +172,6 @@ headers.setContentType(MediaType.APPLICATION_JSON);
             }
         }
 
-        // 🟢 STEP B: NORMAL AI JSON FLOW
         JSONObject data;
 
         try {
@@ -171,7 +184,7 @@ headers.setContentType(MediaType.APPLICATION_JSON);
             return "Sorry, I didn’t understand your request.";
         }
 
-        // 🔹 CASE 1: CATEGORY + BUDGET
+        // 🔹 CATEGORY CASE
         if (data.has("category")) {
 
             String category = data.getString("category");
@@ -188,7 +201,6 @@ headers.setContentType(MediaType.APPLICATION_JSON);
                 return "No items found under ₹" + budget;
             }
 
-            // 🔥 STORE instead of adding
             pendingCart.put(userId, filtered);
 
             List<String> itemNames = filtered.stream()
@@ -199,7 +211,7 @@ headers.setContentType(MediaType.APPLICATION_JSON);
                     "\n\nDo you want to add them to cart? (yes/no)";
         }
 
-        // 🔹 CASE 2: SPECIFIC ITEMS
+        // 🔹 ITEMS CASE
         if (data.has("items")) {
 
             JSONArray itemsArray = data.getJSONArray("items");
@@ -227,7 +239,6 @@ headers.setContentType(MediaType.APPLICATION_JSON);
                 return "No matching items found.";
             }
 
-            // 🔥 STORE instead of adding
             pendingCart.put(userId, tempList);
 
             return "🛒 Found these items:\n" + itemNames +
