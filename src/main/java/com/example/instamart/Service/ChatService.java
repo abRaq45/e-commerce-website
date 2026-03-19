@@ -98,8 +98,9 @@ public class ChatService {
         body.put("messages", messages);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + apiKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+headers.set("Authorization", "Bearer " + apiKey);
+headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app/"); 
+headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> entity =
                 new HttpEntity<>(body.toString(), headers);
