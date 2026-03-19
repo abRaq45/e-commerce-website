@@ -36,7 +36,6 @@ public class ChatService {
 
         if (userMessage.equalsIgnoreCase("yes") ||
                 userMessage.equalsIgnoreCase("no")) {
-
             return handleCartLogic(userId, userMessage);
         }
 
@@ -58,7 +57,7 @@ public class ChatService {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        // 🔥 DEBUG LOGS (IMPORTANT)
+        // 🔍 DEBUG LOGS
         System.out.println("🔍 API KEY VALUE = " + apiKey);
         System.out.println("🔍 BASE URL = " + baseUrl);
 
@@ -82,8 +81,12 @@ public class ChatService {
         """;
 
         JSONObject body = new JSONObject();
-        body.put("model", "meta-llama/llama-3-8b-instruct");
+
+        // ✅ FREE MODEL (WORKING)
+        body.put("model", "mistralai/mistral-7b-instruct");
+
         body.put("temperature", 0.2);
+        body.put("max_tokens", 200); // 🔥 IMPORTANT
 
         JSONArray messages = new JSONArray();
 
@@ -100,9 +103,9 @@ public class ChatService {
 
         body.put("messages", messages);
 
-        // 🔥 HEADERS
+        // 🔥 HEADERS (FINAL FIX)
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + apiKey);
+        headers.setBearerAuth(apiKey); // 🔥 important fix
         headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app");
         headers.set("X-Title", "InstaMart");
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -146,6 +149,7 @@ public class ChatService {
     // 🔹 STEP 3: HANDLE CART LOGIC
     private String handleCartLogic(String userId, String input) {
 
+        // 🟢 YES / NO handling
         if (pendingCart.containsKey(userId)) {
 
             String msg = input.toLowerCase();
