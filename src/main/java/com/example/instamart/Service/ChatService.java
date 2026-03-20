@@ -15,11 +15,10 @@ import java.util.stream.Collectors;
 @Service
 public class ChatService {
 
-    @Value("${openrouter.api.key}")
+    @Value("${groq.api.key}")
     private String apiKey;
 
-    @Value("${openrouter.base.url}")
-    private String baseUrl;
+    private final String baseUrl = "https://api.groq.com/openai/v1/chat/completions";
 
     private final ItemRepository itemRepository;
     private final CartService cartService;
@@ -40,7 +39,7 @@ public class ChatService {
         }
 
         try {
-            String aiResponse = callOpenRouter(userMessage);
+            String aiResponse = callGroq(userMessage);
             String json = extractContent(aiResponse);
 
             return handleCartLogic(userId, json);
@@ -52,14 +51,10 @@ public class ChatService {
         }
     }
 
-    // 🔹 STEP 1: CALL OPENROUTER
-    private String callOpenRouter(String userMessage) {
+    // 🔹 STEP 1: CALL GROQ API
+    private String callGroq(String userMessage) {
 
         RestTemplate restTemplate = new RestTemplate();
-
-        // 🔍 DEBUG LOGS
-        System.out.println("🔍 API KEY VALUE = " + apiKey);
-        System.out.println("🔍 BASE URL = " + baseUrl);
 
         String systemPrompt = """
         You are an AI assistant for an e-commerce application.
@@ -82,10 +77,10 @@ public class ChatService {
 
         JSONObject body = new JSONObject();
 
-        // ✅ FREE MODEL (WORKING)
-          body.put("model", "mistralai/mistral-7b-instruct:free");
-          body.put("temperature", 0.2);
-          body.put("max_tokens", 200);
+        // ✅ GROQ MODEL
+        body.put("model", "llama3-8b-8192");
+        body.put("temperature", 0.2);
+        body.put("max_tokens", 200);
 
         JSONArray messages = new JSONArray();
 
@@ -102,28 +97,23 @@ public class ChatService {
 
         body.put("messages", messages);
 
-        // 🔥 HEADERS (FINAL FIX)
+        // ✅ HEADERS
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(apiKey); // 🔥 important fix
-        headers.set("HTTP-Referer", "https://e-commerce-website-hv58fpqq0-abdul-raquibs-projects.vercel.app");
-        headers.set("X-Title", "InstaMart");
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(apiKey);
 
-        System.out.println("🔍 AUTH HEADER = Bearer " + apiKey);
-
-        HttpEntity<String> entity =
-                new HttpEntity<>(body.toString(), headers);
+        HttpEntity<String> entity = new HttpEntity<>(body.toString(), headers);
 
         try {
             ResponseEntity<String> response =
                     restTemplate.postForEntity(baseUrl, entity, String.class);
 
-            System.out.println("✅ OPENROUTER RESPONSE = " + response.getBody());
+            System.out.println("✅ GROQ RESPONSE = " + response.getBody());
 
             return response.getBody();
 
         } catch (Exception e) {
-            System.out.println("❌ OPENROUTER CALL FAILED:");
+            System.out.println("❌ GROQ CALL FAILED:");
             e.printStackTrace();
             throw e;
         }
@@ -140,8 +130,10 @@ public class ChatService {
                 .getJSONObject("message")
                 .getString("content");
 
-        return content.replaceAll("```json", "")
+        return content
+                .replaceAll("```json", "")
                 .replaceAll("```", "")
+                .replaceAll("Here is.*?:", "")
                 .trim();
     }
 
