@@ -78,7 +78,7 @@ public class ChatService {
         JSONObject body = new JSONObject();
 
         // ✅ GROQ MODEL
-        body.put("model", "llama3-8b-8192");
+        body.put("model", "llama-3.1-8b-instant");
         body.put("temperature", 0.2);
         body.put("max_tokens", 200);
 
